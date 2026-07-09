@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hamster Capybara CEO</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        /* Анимация левитации монет */
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-120px) scale(0.8);
+            }
+        }
+        .floating-text {
+            position: absolute;
+            animation: floatUp 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+        /* Плавные переходы для вкладок */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between overflow-hidden antialiased">
+
+<div class="w-full max-w-md mx-auto bg-slate-900 min-h-screen flex flex-col justify-between shadow-2xl relative border-x border-slate-800">
+    
+    <!-- Верхняя панель со статистикой игрока -->
+    <header class="p-4 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30">
+        <div class="flex items-center justify-between mb-3">
+            <!-- Профиль и Уровень -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 p-0.5 shadow-lg">
+                    <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-lg">
+                        🐹
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-200" id="player-username">Капибара CEO</h3>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="text-xs text-amber-400 font-semibold" id="level-title">Бронза</span>
+                        <span class="text-[10px] text-slate-500">•</span>
+                        <span class="text-xs text-slate-400" id="level-counter">Уровень 1/5</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Текущий ранг прогресс-бар -->
+            <div class="w-1/3">
+                <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+                    <span>До нов. уровня</span>
+                    <span id="level-percent">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full w-0 transition-all duration-300" id="level-progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Показатели прибыли -->
+        <div class="grid grid-cols-2 gap-2 mt-4">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 text-center flex flex-col justify-center">
+                <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Тап</span>
+                <span class="text-amber-400 font-bold text-sm mt-0.5" id="tap-profit-val">+1 🪙</span>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 text-center flex flex-col justify-center">
+                <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Прибыль в час</span>
+                <span class="text-emerald-400 font-bold text-sm mt-0.5" id="pph-val">+0 🪙</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ОСНОВНОЙ ИГРОВОЙ ЭКРАН (ТАП) -->
+    <main id="tab-tap" class="tab-content active flex-1 flex flex-col justify-center items-center p-6 relative">
+        <!-- Баланс монет -->
+        <div class="text-center mb-8">
+            <div class="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">Ваш баланс</div>
+            <div class="flex items-center justify-center gap-2">
+                <div class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 tracking-tight" id="balance-val">0</div>
+                <span class="text-3xl animate-bounce">🪙</span>
+            </div>
+        </div>
+
+        <!-- Большой кликабельный Хомяк/Капибара -->
+        <div class="relative w-72 h-72 flex items-center justify-center mb-10 select-none">
+            <!-- Эффект свечения сзади -->
+            <div class="absolute inset-0 bg-amber-500/10 rounded-full blur-3xl transform scale-75 animate-pulse"></div>
+            
+            <!-- Интерактивная зона клика -->
+            <div id="tap-target" class="w-64 h-64 bg-gradient-to-b from-slate-800 to-slate-900 rounded-full border-4 border-slate-700/80 flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-75 select-none shadow-[0_0_40px_rgba(245,158,11,0.15)] relative overflow-hidden">
+                <!-- Внутренний блик-эффект -->
+                <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent"></div>
+                
+                <!-- SVG Капибары/Хомяка в деловом костюме -->
+                <svg class="w-48 h-48 pointer-events-none" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Ушки -->
+                    <circle cx="28" cy="28" r="12" fill="#8B5A2B"/>
+                    <circle cx="28" cy="28" r="7" fill="#FFC0CB"/>
+                    <circle cx="72" cy="28" r="12" fill="#8B5A2B"/>
+                    <circle cx="72" cy="28" r="7" fill="#FFC0CB"/>
+                    <!-- Голова -->
+                    <ellipse cx="50" cy="52" rx="35" ry="30" fill="#A0522D"/>
+                    <!-- Морда (светлая часть) -->
+                    <ellipse cx="50" cy="58" rx="22" ry="18" fill="#CD853F"/>
+                    <!-- Глазки -->
+                    <circle cx="38" cy="46" r="3.5" fill="#1A1A1A"/>
+                    <circle cx="62" cy="46" r="3.5" fill="#1A1A1A"/>
+                    <circle cx="39.5" cy="44.5" r="1" fill="#FFFFFF"/>
+                    <circle cx="63.5" cy="44.5" r="1" fill="#FFFFFF"/>
+                    <!-- Носик -->
+                    <ellipse cx="50" cy="52" rx="4" ry="2.5" fill="#1A1A1A"/>
+                    <!-- Щечки -->
+                    <circle cx="28" cy="54" r="4.5" fill="#FFB6C1" opacity="0.8"/>
+                    <circle cx="72" cy="54" r="4.5" fill="#FFB6C1" opacity="0.8"/>
+                    <!-- Зубки -->
+                    <rect x="47" y="58" width="6" height="5" fill="#FFFFFF" rx="1"/>
+                    <line x1="50" y1="58" x2="50" y2="63" stroke="#CCCCCC" stroke-width="0.5"/>
+                    <!-- Костюмчик (Пиджак) -->
+                    <path d="M22 75 C 22 75, 20 95, 25 100 L 75 100 C 80 95, 78 75, 78 75 L 50 82 Z" fill="#2F4F4F"/>
+                    <!-- Рубашка -->
+                    <path d="M42 77 L 50 88 L 58 77 Z" fill="#FFFFFF"/>
+                    <!-- Галстук -->
+                    <path d="M48 83 L 52 83 L 53 93 L 50 96 L 47 93 Z" fill="#DC143C"/>
+                    <!-- Стильные очки -->
+                    <rect x="28" y="41" width="16" height="10" rx="3" stroke="#FFD700" stroke-width="2" fill="rgba(255, 215, 0, 0.1)"/>
+                    <rect x="56" y="41" width="16" height="10" rx="3" stroke="#FFD700" stroke-width="2" fill="rgba(255, 215, 0, 0.1)"/>
+                    <line x1="44" y1="46" x2="56" y2="46" stroke="#FFD700" stroke-width="2"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Шкала Энергии -->
+        <div class="w-full max-w-sm px-4">
+            <div class="flex justify-between items-center mb-1.5">
+                <div class="flex items-center gap-1 text-slate-300 text-sm font-semibold">
+                    <span>⚡</span>
+                    <span id="energy-text">1000 / 1000</span>
+                </div>
+                <div class="text-xs text-slate-500 font-medium">Регенерация: +3/с</div>
+            </div>
+            <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-[2px] border border-slate-700/50">
+                <div class="bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-300 h-full rounded-full transition-all duration-100" id="energy-progress-bar" style="width: 100%;"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Вкладка: ШАХТА (Карты для пассивного дохода) -->
+    <main id="tab-mine" class="tab-content flex-1 overflow-y-auto p-4 max-h-[calc(100vh-210px)]">
+        <h2 class="text-lg font-bold text-slate-100 mb-1">Пассивный доход</h2>
+        <p class="text-xs text-slate-400 mb-4">Покупайте бизнес-карты, чтобы увеличивать прибыль в час даже когда вы оффлайн.</p>
+
+        <!-- Сетка карточек -->
+        <div class="grid grid-cols-2 gap-3" id="upgrades-grid">
+            <!-- Шаблон карточки: Маркетинг -->
+            <button onclick="buyUpgrade('marketing')" id="card-marketing" class="bg-slate-900 border border-slate-800 active:scale-[0.98] transition-all rounded-2xl p-3 text-left hover:border-slate-700 flex flex-col justify-between min-h-[150px]">
+                <div class="flex items-start justify-between w-full">
+                    <span class="text-2xl">📢</span>
+                    <span class="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full" id="lbl-lvl-marketing">ур. 0</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-bold text-xs text-slate-200">Маркетинг</h4>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Доход: <span class="text-emerald-400" id="lbl-income-marketing">+10/ч</span></p>
+                </div>
+                <div class="border-t border-slate-800 mt-2.5 pt-2.5 flex items-center justify-between w-full">
+                    <span class="text-[10px] text-slate-400">Стоимость</span>
+                    <span class="text-xs font-bold text-yellow-400" id="lbl-cost-marketing">100 🪙</span>
+                </div>
+            </button>
+
+            <!-- Шаблон карточки: Разработчики -->
+            <button onclick="buyUpgrade('devs')" id="card-devs" class="bg-slate-900 border border-slate-800 active:scale-[0.98] transition-all rounded-2xl p-3 text-left hover:border-slate-700 flex flex-col justify-between min-h-[150px]">
+                <div class="flex items-start justify-between w-full">
+                    <span class="text-2xl">💻</span>
+                    <span class="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full" id="lbl-lvl-devs">ур. 0</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-bold text-xs text-slate-200">Команда Dev</h4>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Доход: <span class="text-emerald-400" id="lbl-income-devs">+50/ч</span></p>
+                </div>
+                <div class="border-t border-slate-800 mt-2.5 pt-2.5 flex items-center justify-between w-full">
+                    <span class="text-[10px] text-slate-400">Стоимость</span>
+                    <span class="text-xs font-bold text-yellow-400" id="lbl-cost-devs">500 🪙</span>
+                </div>
+            </button>
+
+            <!-- Шаблон карточки: Серверы -->
+            <button onclick="buyUpgrade('servers')" id="card-servers" class="bg-slate-900 border border-slate-800 active:scale-[0.98] transition-all rounded-2xl p-3 text-left hover:border-slate-700 flex flex-col justify-between min-h-[150px]">
+                <div class="flex items-start justify-between w-full">
+                    <span class="text-2xl">🖥️</span>
+                    <span class="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full" id="lbl-lvl-servers">ур. 0</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-bold text-xs text-slate-200">Базы данных</h4>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Доход: <span class="text-emerald-400" id="lbl-income-servers">+250/ч</span></p>
+                </div>
+                <div class="border-t border-slate-800 mt-2.5 pt-2.5 flex items-center justify-between w-full">
+                    <span class="text-[10px] text-slate-400">Стоимость</span>
+                    <span class="text-xs font-bold text-yellow-400" id="lbl-cost-servers">2 500 🪙</span>
+                </div>
+            </button>
+
+            <!-- Шаблон карточки: Юристы -->
+            <button onclick="buyUpgrade('lawyers')" id="card-lawyers" class="bg-slate-900 border border-slate-800 active:scale-[0.98] transition-all rounded-2xl p-3 text-left hover:border-slate-700 flex flex-col justify-between min-h-[150px]">
+                <div class="flex items-start justify-between w-full">
+                    <span class="text-2xl">⚖️</span>
+                    <span class="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full" id="lbl-lvl-lawyers">ур. 0</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-bold text-xs text-slate-200">Отдел юристов</h4>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Доход: <span class="text-emerald-400" id="lbl-income-lawyers">+1 200/ч</span></p>
+                </div>
+                <div class="border-t border-slate-800 mt-2.5 pt-2.5 flex items-center justify-between w-full">
+                    <span class="text-[10px] text-slate-400">Стоимость</span>
+                    <span class="text-xs font-bold text-yellow-400" id="lbl-cost-lawyers">12 000 🪙</span>
+                </div>
+            </button>
+        </div>
+    </main>
+
+    <!-- Вкладка: УЛУЧШЕНИЯ / БУСТЫ -->
+    <main id="tab-boosts" class="tab-content flex-1 overflow-y-auto p-4 max-h-[calc(100vh-210px)]">
+        <h2 class="text-lg font-bold text-slate-100 mb-1">Специальные бустеры</h2>
+        <p class="text-xs text-slate-400 mb-4">Увеличивайте силу тапа и максимальный запас своей энергии.</p>
+
+        <div class="flex flex-col gap-3">
+            <!-- Буст: Мультитап -->
+            <button onclick="buyBoost('multitap')" class="bg-slate-900 border border-slate-800 active:scale-[0.99] transition-all rounded-2xl p-4 flex items-center justify-between w-full hover:border-slate-700">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center text-2xl">
+                        👆
+                    </div>
+                    <div class="text-left">
+                        <h4 class="font-bold text-sm text-slate-200">Мультитап</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Увеличение силы тапа на +1</p>
+                        <p class="text-[10px] text-amber-500 font-bold mt-1" id="lbl-lvl-multitap">Текущий уровень: 1</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="block text-xs text-slate-500">Цена</span>
+                    <span class="text-sm font-bold text-yellow-400" id="lbl-cost-multitap">200 🪙</span>
+                </div>
+            </button>
+
+            <!-- Буст: Энергетический бак -->
+            <button onclick="buyBoost('energyLimit')" class="bg-slate-900 border border-slate-800 active:scale-[0.99] transition-all rounded-2xl p-4 flex items-center justify-between w-full hover:border-slate-700">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-yellow-500/10 text-yellow-400 rounded-xl flex items-center justify-center text-2xl">
+                        🔋
+                    </div>
+                    <div class="text-left">
+                        <h4 class="font-bold text-sm text-slate-200">Лимит энергии</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Добавляет +500 к макс. энергии</p>
+                        <p class="text-[10px] text-yellow-500 font-bold mt-1" id="lbl-lvl-energyLimit">Текущий лимит: 1000</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="block text-xs text-slate-500">Цена</span>
+                    <span class="text-sm font-bold text-yellow-400" id="lbl-cost-energyLimit">150 🪙</span>
+                </div>
+            </button>
+
+            <!-- Буст: Полная энергия (бесплатный ежедневный симулятор) -->
+            <button onclick="useFreeEnergy()" id="btn-free-energy" class="bg-slate-900 border border-slate-800 active:scale-[0.99] transition-all rounded-2xl p-4 flex items-center justify-between w-full hover:border-slate-700">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center text-2xl">
+                        ⚡
+                    </div>
+                    <div class="text-left">
+                        <h4 class="font-bold text-sm text-slate-200">Полная энергия</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Мгновенное восполнение энергии</p>
+                        <p class="text-[10px] text-emerald-500 font-bold mt-1" id="free-energy-cooldown">Доступно бесплатно</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="block text-xs text-slate-500">Доступно</span>
+                    <span class="text-xs font-bold text-emerald-400">Бесплатно</span>
+                </div>
+            </button>
+        </div>
+    </main>
+
+    <!-- Вкладка: КВЕСТЫ / РЕФЕРАЛЫ -->
+    <main id="tab-tasks" class="tab-content flex-1 overflow-y-auto p-4 max-h-[calc(100vh-210px)]">
+        <!-- Реферальный блок -->
+        <div class="mb-6">
+            <h2 class="text-lg font-bold text-slate-100 mb-1">Пригласить друзей</h2>
+            <p class="text-xs text-slate-400 mb-3">За каждого приглашенного друга вы оба получаете приятный бонус.</p>
+            
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <div class="text-xs font-semibold text-slate-400">Ваша ссылка</div>
+                        <div class="text-[11px] text-amber-500/90 font-mono mt-0.5 select-all">t.me/hamster_capybara_ceo_bot?start=ref_182749</div>
+                    </div>
+                    <button onclick="copyRefLink()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold text-xs px-3 py-2 rounded-lg transition-all">
+                        Коп. 📋
+                    </button>
+                </div>
+                <button onclick="simulateInvite()" class="w-full bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1">
+                    <span>👥</span> Пригласить друга (+5 000 🪙)
+                </button>
+            </div>
+        </div>
+
+        <!-- Квесты и Задания -->
+        <div>
+            <h2 class="text-lg font-bold text-slate-100 mb-1">Задания</h2>
+            <p class="text-xs text-slate-400 mb-3">Выполняйте простые действия в социальных сетях, чтобы заработать золото.</p>
+
+            <div class="flex flex-col gap-2.5">
+                <!-- Квест 1 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between" id="task-tg">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">✈️</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-slate-200">Подписаться на канал</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Вступайте в сообщество разработчиков</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-yellow-400">+10k 🪙</span>
+                        <button onclick="completeTask('tg', 10000)" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-all">Проверить</button>
+                    </div>
+                </div>
+
+                <!-- Квест 2 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between" id="task-yt">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">🎥</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-slate-200">Посмотреть гайд на YT</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Посмотрите 10 секунд полезного видео</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-yellow-400">+5k 🪙</span>
+                        <button onclick="completeTask('yt', 5000)" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-all">Проверить</button>
+                    </div>
+                </div>
+
+                <!-- Квест 3 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between" id="task-tw">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">🐦</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-slate-200">Сделать репост в X</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Поделитесь новостью о кликере</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-yellow-400">+15k 🪙</span>
+                        <button onclick="completeTask('tw', 15000)" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-all">Проверить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Нижнее фиксированное меню навигации (Tabs) -->
+    <nav class="bg-slate-950 border-t border-slate-800 p-2 pb-5 flex justify-around sticky bottom-0 z-30">
+        <button onclick="switchTab('tap')" id="nav-tap" class="flex flex-col items-center justify-center p-2 text-amber-500 flex-1">
+            <span class="text-xl">🐹</span>
+            <span class="text-[10px] font-bold mt-1">Кликер</span>
+        </button>
+        <button onclick="switchTab('mine')" id="nav-mine" class="flex flex-col items-center justify-center p-2 text-slate-400 flex-1">
+            <span class="text-xl">⛏️</span>
+            <span class="text-[10px] font-bold mt-1">Шахта</span>
+        </button>
+        <button onclick="switchTab('boosts')" id="nav-boosts" class="flex flex-col items-center justify-center p-2 text-slate-400 flex-1">
+            <span class="text-xl">⚡</span>
+            <span class="text-[10px] font-bold mt-1">Бусты</span>
+        </button>
+        <button onclick="switchTab('tasks')" id="nav-tasks" class="flex flex-col items-center justify-center p-2 text-slate-400 flex-1">
+            <span class="text-xl">📋</span>
+            <span class="text-[10px] font-bold mt-1">Квесты</span>
+        </button>
+    </nav>
+</div>
+
+<!-- Оповещение / Уведомления вместо системных alert() -->
+<div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-slate-800 border-2 border-amber-500 text-white font-semibold py-2.5 px-5 rounded-full text-xs shadow-2xl opacity-0 pointer-events-none transition-all duration-300 z-50 text-center max-w-[90%]">
+    Уведомление!
+</div>
+
+<script>
+    /* ИНИЦИАЛИЗАЦИЯ ИГРОВОГО СОСТОЯНИЯ */
+    const gameState = {
+        coins: 0,
+        coinsPerTap: 1,
+        profitPerHour: 0,
+        maxEnergy: 1000,
+        currentEnergy: 1000,
+        energyRegen: 3,
+        level: 1,
+        upgrades: {
+            marketing: { level: 0, basePrice: 100, costMultiplier: 1.5, pphIncrement: 10 },
+            devs: { level: 0, basePrice: 500, costMultiplier: 1.6, pphIncrement: 50 },
+            servers: { level: 0, basePrice: 2500, costMultiplier: 1.7, pphIncrement: 250 },
+            lawyers: { level: 0, basePrice: 12000, costMultiplier: 1.8, pphIncrement: 1200 }
+        },
+        boosts: {
+            multitap: { level: 1, price: 200 },
+            energyLimit: { level: 1, price: 150 }
+        },
+        tasksCompleted: [],
+        lastEnergyTime: Date.now()
+    };
+
+    // Параметры уровней
+    const levels = [
+        { name: "Бронза", minCoins: 0 },
+        { name: "Серебро", minCoins: 1000 },
+        { name: "Золото", minCoins: 10000 },
+        { name: "Платина", minCoins: 100000 },
+        { name: "Алмаз", minCoins: 1000000 }
+    ];
+
+    /* ЗВУКОВОЙ СИНТЕЗАТОР КЛИКОВ (БЕЗ ВНЕШНИХ ФАЙЛОВ) */
+    let audioCtx = null;
+    function playTapSound() {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.12);
+        } catch (e) {
+            console.log("Audio API not supported yet or context error.");
+        }
+    }
+
+    /* СИСТЕМА УВЕДОМЛЕНИЙ */
+    function showNotification(text) {
+        const toast = document.getElementById('toast');
+        toast.textContent = text;
+        toast.classList.remove('opacity-0');
+        toast.classList.add('opacity-100');
+        setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            toast.classList.add('opacity-0');
+        }, 2200);
+    }
+
+    /* ЗАГРУЗКА И СОХРАНЕНИЕ ПРОГРЕССА */
+    function saveGame() {
+        gameState.lastEnergyTime = Date.now();
+        localStorage.setItem('hamster_capybara_game_state', JSON.stringify(gameState));
+    }
+
+    function loadGame() {
+        const saved = localStorage.getItem('hamster_capybara_game_state');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                
+                // Аккуратный мердж данных, чтобы не сломать игру при обновлении полей
+                gameState.coins = parsed.coins || 0;
+                gameState.coinsPerTap = parsed.coinsPerTap || 1;
+                gameState.profitPerHour = parsed.profitPerHour || 0;
+                gameState.maxEnergy = parsed.maxEnergy || 1000;
+                gameState.energyRegen = parsed.energyRegen || 3;
+                gameState.level = parsed.level || 1;
+                gameState.tasksCompleted = parsed.tasksCompleted || [];
+                
+                if (parsed.upgrades) {
+                    for (let key in parsed.upgrades) {
+                        if (gameState.upgrades[key]) {
+                            gameState.upgrades[key].level = parsed.upgrades[key].level || 0;
+                        }
+                    }
+                }
+                
+                if (parsed.boosts) {
+                    for (let key in parsed.boosts) {
+                        if (gameState.boosts[key]) {
+                            gameState.boosts[key].level = parsed.boosts[key].level || 1;
+                            gameState.boosts[key].price = parsed.boosts[key].price || 150;
+                        }
+                    }
+                }
+
+                // Расчет оффлайн прибыли и восстановление энергии за время отсутствия
+                const elapsedSeconds = Math.floor((Date.now() - (parsed.lastEnergyTime || Date.now())) / 1000);
+                if (elapsedSeconds > 0) {
+                    // Пассивный доход за время отсутствия
+                    const offlineEarnings = Math.floor((gameState.profitPerHour / 3600) * elapsedSeconds);
+                    if (offlineEarnings > 0) {
+                        gameState.coins += offlineEarnings;
+                        setTimeout(() => {
+                            showNotification(`Привет! Пока тебя не было, твой бизнес принес ${offlineEarnings} 🪙!`);
+                        }, 1000);
+                    }
+
+                    // Регенерация энергии за время отсутствия
+                    gameState.currentEnergy = Math.min(
+                        gameState.maxEnergy,
+                        (parsed.currentEnergy || 1000) + (gameState.energyRegen * elapsedSeconds)
+                    );
+                } else {
+                    gameState.currentEnergy = parsed.currentEnergy || 1000;
+                }
+            } catch (e) {
+                console.error("Ошибка парсинга сохранений, сброс к дефолтным значениям", e);
+            }
+        }
+        updateUI();
+    }
+
+    /* ОБНОВЛЕНИЕ ЭЛЕМЕНТОВ ИНТЕРФЕЙСА */
+    function updateUI() {
+        // Базовые показатели
+        document.getElementById('balance-val').textContent = Math.floor(gameState.coins).toLocaleString();
+        document.getElementById('tap-profit-val').textContent = `+${gameState.coinsPerTap} 🪙`;
+        document.getElementById('pph-val').textContent = `+${gameState.profitPerHour.toLocaleString()} 🪙`;
+        
+        // Уровни и прогресс-бар
+        calculateLevel();
+
+        // Энергия
+        document.getElementById('energy-text').textContent = `${Math.floor(gameState.currentEnergy)} / ${gameState.maxEnergy}`;
+        const energyPercent = (gameState.currentEnergy / gameState.maxEnergy) * 100;
+        document.getElementById('energy-progress-bar').style.width = `${energyPercent}%`;
+
+        // Карты бизнеса в Шахте
+        for (let key in gameState.upgrades) {
+            const up = gameState.upgrades[key];
+            const cost = Math.round(up.basePrice * Math.pow(up.costMultiplier, up.level));
+            const income = up.pphIncrement * (up.level + 1);
+            
+            const lvlEl = document.getElementById(`lbl-lvl-${key}`);
+            const incomeEl = document.getElementById(`lbl-income-${key}`);
+            const costEl = document.getElementById(`lbl-cost-${key}`);
+            
+            if (lvlEl) lvlEl.textContent = `ур. ${up.level}`;
+            if (incomeEl) incomeEl.textContent = `+${income}/ч`;
+            if (costEl) costEl.textContent = `${cost.toLocaleString()} 🪙`;
+
+            // Визуальное отключение кнопок при нехватке средств
+            const btn = document.getElementById(`card-${key}`);
+            if (btn) {
+                if (gameState.coins < cost) {
+                    btn.classList.add('opacity-60');
+                } else {
+                    btn.classList.remove('opacity-60');
+                }
+            }
+        }
+
+        // Бусты
+        document.getElementById('lbl-lvl-multitap').textContent = `Текущий уровень: ${gameState.coinsPerTap}`;
+        document.getElementById('lbl-cost-multitap').textContent = `${gameState.boosts.multitap.price} 🪙`;
+
+        document.getElementById('lbl-lvl-energyLimit').textContent = `Текущий лимит: ${gameState.maxEnergy}`;
+        document.getElementById('lbl-cost-energyLimit').textContent = `${gameState.boosts.energyLimit.price} 🪙`;
+
+        // Отрисовка выполненных квестов
+        gameState.tasksCompleted.forEach(id => {
+            const tEl = document.getElementById(`task-${id}`);
+            if (tEl) {
+                const btn = tEl.querySelector('button');
+                if (btn) {
+                    btn.textContent = 'Выполнено ✓';
+                    btn.disabled = true;
+                    btn.className = "bg-emerald-600 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg";
+                }
+            }
+        });
+    }
+
+    /* РАСЧЕТ И ОТОБРАЖЕНИЕ ТЕКУЩЕГО УРОВНЯ */
+    function calculateLevel() {
+        let currentLvlIndex = 0;
+        for (let i = 0; i < levels.length; i++) {
+            if (gameState.coins >= levels[i].minCoins) {
+                currentLvlIndex = i;
+            }
+        }
+        
+        const curLvl = levels[currentLvlIndex];
+        const nextLvl = levels[currentLvlIndex + 1] || null;
+        
+        gameState.level = currentLvlIndex + 1;
+        document.getElementById('level-title').textContent = curLvl.name;
+        document.getElementById('level-counter').textContent = `Уровень ${gameState.level}/5`;
+
+        if (nextLvl) {
+            const range = nextLvl.minCoins - curLvl.minCoins;
+            const progress = gameState.coins - curLvl.minCoins;
+            const percentage = Math.min(100, Math.max(0, Math.floor((progress / range) * 100)));
+            
+            document.getElementById('level-percent').textContent = `${percentage}%`;
+            document.getElementById('level-progress-bar').style.width = `${percentage}%`;
+        } else {
+            document.getElementById('level-percent').textContent = `100%`;
+            document.getElementById('level-progress-bar').style.width = `100%`;
+        }
+    }
+
+    /* НАВИГАЦИЯ МЕЖДУ ВКЛАДКАМИ */
+    function switchTab(tabId) {
+        // Переключаем активный контент
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+
+        // Подсвечиваем активную иконку навигации
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.classList.remove('text-amber-500');
+            btn.classList.add('text-slate-400');
+        });
+        document.getElementById(`nav-${tabId}`).classList.remove('text-slate-400');
+        document.getElementById(`nav-${tabId}`).classList.add('text-amber-500');
+    }
+
+    /* ОБРАБОТЧИК КЛИКОВ (ТАПЫ) */
+    const tapTarget = document.getElementById('tap-target');
+    tapTarget.addEventListener('touchstart', handleTap, { passive: false });
+    tapTarget.addEventListener('mousedown', (e) => {
+        // Поддержка обычных кликов мыши на десктопе
+        if (e.button === 0 && !('ontouchstart' in window)) {
+            handleTap(e);
+        }
+    });
+
+    function handleTap(e) {
+        e.preventDefault();
+
+        // Позиционирование клика для спавна цифр
+        let clientX, clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        // Проверка энергии
+        if (gameState.currentEnergy < gameState.coinsPerTap) {
+            showNotification("Недостаточно энергии! Подождите восстановления.");
+            return;
+        }
+
+        // Вычитаем энергию и добавляем монеты
+        gameState.currentEnergy -= gameState.coinsPerTap;
+        gameState.coins += gameState.coinsPerTap;
+
+        // Воспроизводим звук и визуальные эффекты
+        playTapSound();
+        spawnFloatingText(clientX, clientY, `+${gameState.coinsPerTap}`);
+        apply3DTilt(clientX, clientY);
+        updateUI();
+        saveGame();
+    }
+
+    /* КРАСИВЫЙ 3D ЭФФЕКТ НАКЛОНА */
+    function apply3DTilt(clickX, clickY) {
+        const rect = tapTarget.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Разница между точкой клика и центром элемента
+        const tiltX = (clickY - centerY) / (rect.height / 2) * -15; // наклон по X
+        const tiltY = (clickX - centerX) / (rect.width / 2) * 15;   // наклон по Y
+
+        // Применяем 3D-трансформацию
+        tapTarget.style.transform = `perspective(500px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(0.95)`;
+        
+        // Быстро возвращаем в дефолтное положение
+        setTimeout(() => {
+            tapTarget.style.transform = `perspective(500px) rotateX(0deg) rotateY(0deg) scale(1)`;
+        }, 80);
+    }
+
+    /* АНИМАЦИЯ ЦИФР ПРИ КЛИКЕ */
+    function spawnFloatingText(x, y, text) {
+        const floatingEl = document.createElement('div');
+        floatingEl.className = 'floating-text text-2xl font-black text-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50';
+        floatingEl.style.left = `${x - 20}px`;
+        floatingEl.style.top = `${y - 20}px`;
+        floatingEl.textContent = text;
+        
+        document.body.appendChild(floatingEl);
+        
+        // Удаляем элемент после завершения анимации
+        setTimeout(() => {
+            floatingEl.remove();
+        }, 800);
+    }
+
+    /* ПОКУПКА ПАССИВНЫХ УЛУЧШЕНИЙ (ШАХТА) */
+    function buyUpgrade(key) {
+        const up = gameState.upgrades[key];
+        const cost = Math.round(up.basePrice * Math.pow(up.costMultiplier, up.level));
+
+        if (gameState.coins >= cost) {
+            gameState.coins -= cost;
+            up.level += 1;
+            gameState.profitPerHour += up.pphIncrement;
+            
+            showNotification(`Вы успешно улучшили карту "${getUpgradeName(key)}"!`);
+            updateUI();
+            saveGame();
+        } else {
+            showNotification("Недостаточно монет для покупки этого улучшения.");
+        }
+    }
+
+    function getUpgradeName(key) {
+        switch (key) {
+            case 'marketing': return 'Маркетинг';
+            case 'devs': return 'Команда Dev';
+            case 'servers': return 'Базы данных';
+            case 'lawyers': return 'Отдел юристов';
+            default: return 'Бизнес';
+        }
+    }
+
+    /* ПОКУПКА БУСТОВ ДЛЯ КЛИКА */
+    function buyBoost(type) {
+        const boost = gameState.boosts[type];
+        if (gameState.coins >= boost.price) {
+            gameState.coins -= boost.price;
+            
+            if (type === 'multitap') {
+                gameState.coinsPerTap += 1;
+                boost.price = Math.round(boost.price * 2.5);
+                showNotification("Мощность тапа увеличена!");
+            } else if (type === 'energyLimit') {
+                gameState.maxEnergy += 500;
+                gameState.currentEnergy += 500;
+                boost.price = Math.round(boost.price * 2.2);
+                showNotification("Запас энергии расширен!");
+            }
+            updateUI();
+            saveGame();
+        } else {
+            showNotification("Недостаточно средств для улучшения бустера.");
+        }
+    }
+
+    /* БЕСПЛАТНЫЙ БУСТ: ПОЛНОЕ ВОССТАНОВЛЕНИЕ ЭНЕРГИИ */
+    let lastFreeEnergyTime = 0;
+    function useFreeEnergy() {
+        const now = Date.now();
+        // Разрешаем раз в 60 секунд для демонстрации (в реальном приложении раз в сутки)
+        if (now - lastFreeEnergyTime > 60000) {
+            gameState.currentEnergy = gameState.maxEnergy;
+            lastFreeEnergyTime = now;
+            
+            showNotification("Энергия полностью восполнена!");
+            updateUI();
+            saveGame();
+
+            // Запускаем таймер перезарядки кнопки
+            const cooldownEl = document.getElementById('free-energy-cooldown');
+            let secondsLeft = 60;
+            const interval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    clearInterval(interval);
+                    cooldownEl.textContent = "Доступно бесплатно";
+                    cooldownEl.className = "text-[10px] text-emerald-500 font-bold mt-1";
+                } else {
+                    cooldownEl.textContent = `Перезарядка: ${secondsLeft}с`;
+                    cooldownEl.className = "text-[10px] text-rose-500 font-bold mt-1";
+                }
+            }, 1000);
+        } else {
+            showNotification("Бустер перезаряжается! Попробуйте позже.");
+        }
+    }
+
+    /* СИМУЛЯЦИЯ РЕФЕРАЛОВ И КОПИРОВАНИЯ ССЫЛКИ */
+    function copyRefLink() {
+        // Симулируем безопасное копирование в буфер обмена для WebApp
+        const dummy = document.createElement("input");
+        document.body.appendChild(dummy);
+        dummy.value = "t.me/hamster_capybara_ceo_bot?start=ref_182749";
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+        showNotification("Ссылка скопирована в буфер обмена!");
+    }
+
+    function simulateInvite() {
+        gameState.coins += 5000;
+        showNotification("Вы успешно пригласили друга! Получено +5000 🪙");
+        updateUI();
+        saveGame();
+    }
+
+    /* СИМУЛЯЦИЯ КВЕСТОВ */
+    function completeTask(taskId, reward) {
+        if (!gameState.tasksCompleted.includes(taskId)) {
+            // Симулируем проверку
+            showNotification("Проверка выполнения задания...");
+            setTimeout(() => {
+                gameState.coins += reward;
+                gameState.tasksCompleted.push(taskId);
+                showNotification(`Задание зачтено! Получено +${reward.toLocaleString()} 🪙`);
+                updateUI();
+                saveGame();
+            }, 1200);
+        }
+    }
+
+    /* ИГРОВОЙ ЦИКЛ (ЗАПУСКАЕТСЯ КАЖДУЮ СЕКУНДУ) */
+    setInterval(() => {
+        // 1. Пассивное накопление монет (Прибыль в час / 3600 сек)
+        if (gameState.profitPerHour > 0) {
+            const earningsPerSecond = gameState.profitPerHour / 3600;
+            gameState.coins += earningsPerSecond;
+        }
+
+        // 2. Регенерация энергии
+        if (gameState.currentEnergy < gameState.maxEnergy) {
+            gameState.currentEnergy = Math.min(gameState.maxEnergy, gameState.currentEnergy + gameState.energyRegen);
+        }
+
+        // Обновляем отображение и сохраняем прогресс
+        updateUI();
+        saveGame();
+    }, 1000);
+
+    /* ИНИЦИАЛИЗАЦИЯ ИГРЫ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ */
+    window.onload = function() {
+        loadGame();
+    };
+</script>
+
+</body>
+</html>
